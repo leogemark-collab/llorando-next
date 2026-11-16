@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Task Manager
 
-## Getting Started
+Implementation of `Nextjs_CRUD_Step_by_Step_Guide.pdf` in the existing
+`llorando-next` project, following its SQLite schema, API routes, component,
+validation, and responsive stylesheet.
 
-First, run the development server:
+## Run locally
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Use Node.js 22 or later, as required by the installed SQLite driver.
+
+```powershell
+npm.cmd install
+npm.cmd run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. `npm.cmd` works when PowerShell blocks the unsigned
+`npm.ps1` launcher; `npm` works when your shell permits it.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Tasks persist in `data/tasks.db`, created automatically with the `tasks` table
+and WAL journaling. The `data/` directory is ignored by Git.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project structure
 
-## Learn More
+- `lib/db.ts`: server-only SQLite connection and table initialization.
+- `app/api/tasks/route.ts`: GET lists tasks newest first; POST creates a task.
+- `app/api/tasks/[id]/route.ts`: GET reads one task, PATCH edits its title and/or
+  completion flag, and DELETE removes it with an empty HTTP 204 response.
+- `components/TaskManager.tsx`: add, edit, cancel, complete, confirm deletion,
+  task totals, empty state, busy state, and errors.
+- `app/page.tsx`: renders the Task Manager.
+- `app/globals.css`: the guide's layout, task styles, and mobile breakpoint.
 
-To learn more about Next.js, take a look at the following resources:
+Titles are trimmed and must contain 1–120 characters. Invalid JSON, invalid
+fields, and invalid IDs return HTTP 400; missing tasks return HTTP 404.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Necessary adjustments
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Setup steps reuse the existing Next.js installation and project directory.
+- Step 14 omits its GET function declaration. Its handler body is enclosed in
+  `export async function GET(_request: Request, context: Context)`.
+- The starter's `cacheComponents` and `partialPrefetching` settings are removed
+  so the guide's `runtime` and `dynamic` route exports work in this Next.js version.
+- A narrow lint exception preserves the guide's mount-time fetch. Its state
+  updates occur after the asynchronous request.
 
-## Deploy on Vercel
+The optional due date, priority, and filter challenge remains an exercise.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Verify
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```powershell
+npm.cmd run lint
+npm.cmd run build
+npm.cmd run start
+```
+
+Stop the development server before starting production on the same port. In
+another PowerShell terminal, the guide's API demonstration is:
+
+```powershell
+Invoke-RestMethod http://localhost:3000/api/tasks
+Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/tasks -ContentType "application/json" -Body '{"title":"API demo"}'
+Invoke-RestMethod http://localhost:3000/api/tasks
+```
+
+In the browser, add `Prepare class activity`, refresh, edit and save it, mark it
+complete, refresh again, then delete and confirm. Each change should persist.
+
+This is the guide's local teaching app. File-based SQLite requires a persistent
+local disk; the guide recommends managed PostgreSQL for typical cloud deployment.
